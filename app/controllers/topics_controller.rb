@@ -172,6 +172,8 @@ class TopicsController < ApplicationController
     guardian.ensure_can_delete!(topic)
     topic.trash!(current_user)
     render nothing: true
+    require 'hipchat'
+    HipChat::report_event!(current_user, "deleted-topic", topic)
   end
 
   def recover
@@ -179,6 +181,8 @@ class TopicsController < ApplicationController
     guardian.ensure_can_recover_topic!(topic)
     topic.recover!
     render nothing: true
+    require 'hipchat'
+    HipChat::report_event!(current_user, "recovered-topic", topic)
   end
 
   def excerpt

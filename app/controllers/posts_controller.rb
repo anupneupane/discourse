@@ -40,6 +40,12 @@ class PostsController < ApplicationController
 
         "e" << MultiJson.dump(errors: post_creator.errors.full_messages)
       else
+        require 'hipchat'
+        if create_params[:topic_id].blank? then # new topic?
+          HipChat::report_event!(current_user, "created-topic", post.topic, post)
+        else
+          HipChat::report_event!(current_user, "created-post", post.topic, post)
+        end
         post_serializer = PostSerializer.new(post, scope: guardian, root: false)
         post_serializer.topic_slug = post.topic.slug if post.topic.present?
         post_serializer.draft_sequence = DraftSequence.current(current_user, post.topic.draft_key)
@@ -134,6 +140,8 @@ class PostsController < ApplicationController
     destroyer.destroy
 
     render nothing: true
+    require 'hipchat'
+    HipChat::report_event!(current_user, "deleted-post", post.topic, post)
   end
 
   def recover
@@ -144,6 +152,8 @@ class PostsController < ApplicationController
     post.reload
 
     render_post_json(post)
+    require 'hipchat'
+    HipChat::report_event!(current_user, "recovered-post", post.topic, post)
   end
 
   def destroy_many
